@@ -14,6 +14,7 @@ from fusepy import FUSE, FuseOSError, Operations
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
 NOW = time.time()
+CACHED = []  # raw output of `docker images`
 MARKER = b'Presence of this virtual file means the DockerFS is mounted.\n'
 README = {'inode': 1, 'size': len(MARKER), 'ctime': NOW, 'contents': MARKER}
 IMAGES = {'README': README}
@@ -39,6 +40,7 @@ class DockerFS(Operations):
     '''
     def getattr(self, path, fh=None):
         logging.debug('getattr(path=%s)', path)
+        update()
         entry = None
         repo = path.lstrip(os.path.sep)
         subdir = None
@@ -76,8 +78,8 @@ class DockerFS(Operations):
 
     def readdir(self, path, fh):
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
-        cleanpath = path.lstrip(os.path.sep)
         update()
+        cleanpath = path.lstrip(os.path.sep)
         if cleanpath == '':
             for child in ['.', '..', *SUBDIRS, *IMAGES]:
                 logging.debug('yielding %s', child)
@@ -90,10 +92,11 @@ class DockerFS(Operations):
             raise FuseOSError(errno.ENOENT)
 
     def read(self, path, size, offset, fh):
-        response = None
-        repo = path.lstrip(os.path.sep)
         logging.debug('read (path=%s, size=%d, offset=%d, fh=%d',
                       path, size, offset, fh)
+        update()
+        response = None
+        repo = path.lstrip(os.path.sep)
         if repo in IMAGES:
             contents = IMAGES[repo].get('contents')
             if contents is not None:
@@ -130,8 +133,6 @@ def update():
     '''
     update global IMAGES with current list
     '''
-    IMAGES.clear()
-    IMAGES['README'] = README
     raw = subprocess.run([
         'docker', 'images', '--format',
         '{{.ID}}:{{.Repository}}:{{.Tag}}'
@@ -139,6 +140,13 @@ def update():
     logging.debug(raw)
     lines = raw.split('\n')
     logging.debug('lines: %s', lines)
+    if lines == CACHED:
+        logging.debug('`docker images` unchanged, not updating')
+        return
+    logging.debug('`docker images` has changed, updating')
+    CACHED[:] = lines
+    IMAGES.clear()
+    IMAGES['README'] = README
     for line in filter(None, lines):
         dockerid, repo = line.split(':', 1)
         #repo = repo.replace(dockerpath.sep, '_')
