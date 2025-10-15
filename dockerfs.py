@@ -19,16 +19,10 @@ MARKER = b'Presence of this virtual file means the DockerFS is mounted.\n'
 README = {'inode': 1, 'size': len(MARKER), 'ctime': NOW, 'contents': MARKER}
 IMAGES = {'README': README}
 SUBDIRS = defaultdict(dict)
+LINKS = defaultdict(dict)
 DIRECTORY = {
     'st_mode': (stat.S_IFDIR | 0o755),
     'st_nlink': 2,
-    'st_size': 0,
-    'st_ctime': NOW, 'st_mtime': NOW, 'st_atime': NOW,
-    'st_uid': os.getuid(), 'st_gid': os.getgid()
-}
-FILE = {
-    'st_mode': (stat.S_IFREG | 0o444),
-    'st_nlink': 1,
     'st_size': 0,
     'st_ctime': NOW, 'st_mtime': NOW, 'st_atime': NOW,
     'st_uid': os.getuid(), 'st_gid': os.getgid()
@@ -59,6 +53,16 @@ class DockerFS(Operations):
                 'st_ctime': ctime, 'st_mtime': ctime, 'st_atime': ctime,
                 'st_uid': os.getuid(), 'st_gid': os.getgid()
             }
+        elif repo in LINKS and LINKS[repo] in IMAGES:
+            image = IMAGES[LINKS[repo]]
+            ctime = image['ctime']
+            entry = {
+                'st_mode': (stat.S_IFLNK | 0o444),
+                'st_nlink': 1,
+                'st_size': len(repo + ':latest'),
+                'st_ctime': ctime, 'st_mtime': ctime, 'st_atime': ctime,
+                'st_uid': os.getuid(), 'st_gid': os.getgid()
+            }
         elif subdir in SUBDIRS and repo in SUBDIRS[subdir]:
             image = SUBDIRS[subdir][repo]
             ctime = image['ctime']
@@ -81,7 +85,7 @@ class DockerFS(Operations):
         update()
         cleanpath = path.lstrip(os.path.sep)
         if cleanpath == '':
-            for child in ['.', '..', *SUBDIRS, *IMAGES]:
+            for child in sorted(['.', '..', *SUBDIRS, *IMAGES, *LINKS]):
                 logging.debug('yielding %s', child)
                 yield child
         elif cleanpath in SUBDIRS:
@@ -146,6 +150,8 @@ def update():
     logging.debug('`docker images` has changed, updating')
     CACHED[:] = lines
     IMAGES.clear()
+    SUBDIRS.clear()
+    LINKS.clear()
     IMAGES['README'] = README
     for line in filter(None, lines):
         dockerid, repo = line.split(':', 1)
@@ -165,6 +171,8 @@ def update():
             SUBDIRS[subdir][repo] = attributes
         else:
             IMAGES[repo] = attributes
+            if repo.endswith(':latest'):
+                LINKS[repo[0:-len(':latest')]] = repo
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
