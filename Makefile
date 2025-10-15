@@ -25,3 +25,6 @@ umount:
 	fusermount -u $(MOUNTPOINT)
 test:
 	$(MAKE) OPT=
+install: dockerfs.py
+	cp --archive --interactive $< $(HOME)/.local/bin/
+.PHONY: install test umount env %.pylint
