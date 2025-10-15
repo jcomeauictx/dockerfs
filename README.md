@@ -7,3 +7,28 @@ Docker images&mdash;and this makes for tricky Makefile hacks.
 files, at least, enough to establish that they are present in `docker images`.
 
 [^1]: [Everything is a file](https://en.wikipedia.org/wiki/Everything_is_a_file)
+
+## developer's notes
+
+you must escape the colon in the target in a Makefile, e.g.:
+```
+IMAGE := alpine-ish-dev
+TAG := $(IMAGE)\:latest
+MOUNTPOINT := $(HOME)/mnt/docker-images
+$(MOUNTPOINT)/$(TAG): Dockerfile | $(MOUNTPOINT)/README
+    -docker stop $(IMAGE)
+    -docker rm $(IMAGE)
+    -docker rmi $(TAG)
+# you also must build with --no-cache so Make knows when to rebuild
+    docker build \
+     --no-cache \
+     --tag $(TAG)
+$(MOUNTPOINT)/README: dockerfs.py $(MOUNTPOINT)
+    $(PYTHON) $+
+$(MOUNTPOINT): | $(HOME)
+    mkdir -p $@
+```
+if you copy-and-paste the Makefile, be sure to change the 4-space indents to
+actual tabs.
+
+next step for me is to do the same for docker-containers.
