@@ -22,7 +22,8 @@ $(MOUNTPOINT)/$(TAG): Dockerfile | $(MOUNTPOINT)/README
 # you also must build with --no-cache so Make knows when to rebuild
     docker build \
      --no-cache \
-     --tag $(TAG)
+     --tag $(TAG) \
+     .
 $(MOUNTPOINT)/README: dockerfs.py $(MOUNTPOINT)
     $(PYTHON) $+
 $(MOUNTPOINT): | $(HOME)
