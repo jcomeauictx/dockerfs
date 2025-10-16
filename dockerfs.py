@@ -14,7 +14,11 @@ from fusepy import FUSE, FuseOSError, Operations
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
 NOW = time.time()
-CACHED = []  # raw output of `docker images`
+FS = 'images'  # 'images' or 'containers'
+CACHED = {  # raw output of `docker images` and `docker ls`
+    'images': [],
+    'containers': [],
+}
 MARKER = b'Presence of this virtual file means the DockerFS is mounted.\n'
 README = {'inode': 1, 'size': len(MARKER), 'ctime': NOW, 'contents': MARKER}
 IMAGES = {'README': README}
@@ -107,18 +111,18 @@ class DockerFS(Operations):
             raise FuseOSError(errno.ENOENT)
         return response
 
-def main(mountpoint=None):
+def main(mountpoint=None, fs=FS):
     '''
     initialize and launch the filesystem
     '''
-    # Create a mount point
-    mountpoint = mountpoint or os.path.expanduser('~/mnt/docker-images')
+    # create a mount point
+    mountpoint = mountpoint or os.path.expanduser(f'~/mnt/docker-{fs}')
     os.makedirs(mountpoint, exist_ok=True)
 
-    # Create an instance of our filesystem
+    # create an instance of our filesystem
     filesystem = DockerFS()
 
-    # Start the FUSE filesystem
+    # start the FUSE filesystem
     # foreground=True runs in the foreground for easier debugging.
     # auto_unmount=True allows automatic unmounting on exit.
     FUSE(
@@ -140,11 +144,11 @@ def update():
     logging.debug(raw)
     lines = raw.split('\n')
     logging.debug('lines: %s', lines)
-    if lines == CACHED:
+    if lines == CACHED[FS]:
         logging.debug('`docker images` unchanged, not updating')
         return
     logging.debug('`docker images` has changed, updating')
-    CACHED[:] = lines
+    CACHED[FS][:] = lines
     IMAGES.clear()
     IMAGES['README'] = README
     for line in filter(None, lines):
@@ -167,4 +171,5 @@ def update():
             IMAGES[repo] = attributes
 
 if __name__ == "__main__":
+    FS = sys.argv[2] if len(sys.argv) > 2 else 'images'
     main(*sys.argv[1:])
