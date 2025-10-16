@@ -10,6 +10,11 @@ import posixpath as dockerpath
 from collections import defaultdict
 from copy import deepcopy
 from fusepy import FUSE, FuseOSError, Operations
+def update(*args):
+    '''
+    bogus definition, fixed in __main__
+    '''
+    logging.log(logging.NOTSET, 'args: %s', args)
 
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
@@ -133,7 +138,7 @@ def main(mountpoint=None, fs=FS):
         auto_unmount=__debug__
     )
 
-def update():
+def update_images():
     '''
     update global IMAGES with current list
     '''
@@ -170,6 +175,15 @@ def update():
         else:
             IMAGES[repo] = attributes
 
+def update_containers():
+    '''
+    update global CONTAINERS with current list
+
+    docker ps --format '{{.ID}} {{.Names}}'
+    docker inspect 357a --format '{{.Created}} {{.HostConfig.ShmSize}}'
+    '''
+
 if __name__ == "__main__":
     FS = sys.argv[2] if len(sys.argv) > 2 else 'images'
+    update = eval(f'update_{FS}')  # pylint: disable=eval-used
     main(*sys.argv[1:])
