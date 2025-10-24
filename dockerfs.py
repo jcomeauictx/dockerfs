@@ -155,6 +155,8 @@ def update():
             '--format', '{{.Created}} {{.Size}}',
             dockerid
         ], capture_output=True, check=False).stdout.decode().split()
+        # older Python can't handle '2021-11-12T16:38:42.978865393Z'
+        created = created[:len(datetime.now().isoformat())]
         created = datetime.fromisoformat(created).timestamp()
         inode = int(dockerid, 16)
         size = int(strsize)
