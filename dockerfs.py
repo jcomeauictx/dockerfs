@@ -18,6 +18,7 @@ CACHED = []  # raw output of `docker images`
 MARKER = b'Presence of this virtual file means the DockerFS is mounted.\n'
 README = {'inode': 1, 'size': len(MARKER), 'ctime': NOW, 'contents': MARKER}
 IMAGES = {'README': README}
+CONTAINERS = {'README': README}
 SUBDIRS = defaultdict(dict)
 DIRECTORY = {
     'st_mode': (stat.S_IFDIR | 0o755),
@@ -26,15 +27,8 @@ DIRECTORY = {
     'st_ctime': NOW, 'st_mtime': NOW, 'st_atime': NOW,
     'st_uid': os.getuid(), 'st_gid': os.getgid()
 }
-FILE = {
-    'st_mode': (stat.S_IFREG | 0o444),
-    'st_nlink': 1,
-    'st_size': 0,
-    'st_ctime': NOW, 'st_mtime': NOW, 'st_atime': NOW,
-    'st_uid': os.getuid(), 'st_gid': os.getgid()
-}
 
-class DockerFS(Operations):
+class DockerImagesFS(Operations):
     '''
     define the docker filesystem operations
     '''
@@ -155,7 +149,7 @@ def main(mountpoint=None):
     os.makedirs(mountpoint, exist_ok=True)
 
     # Create an instance of our filesystem
-    filesystem = DockerFS()
+    filesystem = DockerImagesFS()
 
     # Start the FUSE filesystem
     # foreground=True runs in the foreground for easier debugging.
