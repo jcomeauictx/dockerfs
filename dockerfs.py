@@ -101,7 +101,7 @@ class DockerImagesFS(Operations):
             raise FuseOSError(errno.ENOENT)
         return response
 
-    def update(self):
+    def update(self):  # pylint: disable=no-self-use
         '''
         update global IMAGES with current list
         '''
