@@ -40,7 +40,7 @@ class DockerFS(Operations):
     '''
     def getattr(self, path, fh=None):
         logging.debug('getattr(path=%s)', path)
-        update()
+        self.update()
         entry = None
         repo = path.lstrip(os.path.sep)
         subdir = None
@@ -78,7 +78,7 @@ class DockerFS(Operations):
 
     def readdir(self, path, fh):
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
-        update()
+        self.update()
         cleanpath = path.lstrip(os.path.sep)
         if cleanpath == '':
             for child in ['.', '..', *SUBDIRS, *IMAGES]:
@@ -94,7 +94,7 @@ class DockerFS(Operations):
     def read(self, path, size, offset, fh):
         logging.debug('read (path=%s, size=%d, offset=%d, fh=%d',
                       path, size, offset, fh)
-        update()
+        self.update()
         response = None
         repo = path.lstrip(os.path.sep)
         if repo in IMAGES:
@@ -106,6 +106,45 @@ class DockerFS(Operations):
         else:
             raise FuseOSError(errno.ENOENT)
         return response
+
+    def update(self):
+        '''
+        update global IMAGES with current list
+        '''
+        raw = subprocess.run([
+            'docker', 'images', '--format',
+            '{{.ID}}:{{.Repository}}:{{.Tag}}'
+        ], capture_output=True, check=False).stdout.decode()
+        logging.debug(raw)
+        lines = raw.split('\n')
+        logging.debug('lines: %s', lines)
+        if lines == CACHED:
+            logging.debug('`docker images` unchanged, not updating')
+            return
+        logging.debug('`docker images` has changed, updating')
+        CACHED[:] = lines
+        IMAGES.clear()
+        IMAGES['README'] = README
+        for line in filter(None, lines):
+            dockerid, repo = line.split(':', 1)
+            #repo = repo.replace(dockerpath.sep, '_')
+            created, strsize = subprocess.run([
+                'docker', 'inspect',
+                '--format', '{{.Created}} {{.Size}}',
+                dockerid
+            ], capture_output=True, check=False).stdout.decode().split()
+            # older Python can't handle '2021-11-12T16:38:42.978865393Z'
+            created = created[:len(datetime.now().isoformat())]
+            created = datetime.fromisoformat(created).timestamp()
+            inode = int(dockerid, 16)
+            size = int(strsize)
+            logging.debug('attributes: %s', (inode, repo, created, size))
+            attributes = {'ctime': created, 'size': size, 'inode': inode}
+            if dockerpath.sep in repo:
+                subdir, repo = repo.split(dockerpath.sep)
+                SUBDIRS[subdir][repo] = attributes
+            else:
+                IMAGES[repo] = attributes
 
 def main(mountpoint=None):
     '''
@@ -128,45 +167,6 @@ def main(mountpoint=None):
         foreground=__debug__,
         auto_unmount=__debug__
     )
-
-def update():
-    '''
-    update global IMAGES with current list
-    '''
-    raw = subprocess.run([
-        'docker', 'images', '--format',
-        '{{.ID}}:{{.Repository}}:{{.Tag}}'
-    ], capture_output=True, check=False).stdout.decode()
-    logging.debug(raw)
-    lines = raw.split('\n')
-    logging.debug('lines: %s', lines)
-    if lines == CACHED:
-        logging.debug('`docker images` unchanged, not updating')
-        return
-    logging.debug('`docker images` has changed, updating')
-    CACHED[:] = lines
-    IMAGES.clear()
-    IMAGES['README'] = README
-    for line in filter(None, lines):
-        dockerid, repo = line.split(':', 1)
-        #repo = repo.replace(dockerpath.sep, '_')
-        created, strsize = subprocess.run([
-            'docker', 'inspect',
-            '--format', '{{.Created}} {{.Size}}',
-            dockerid
-        ], capture_output=True, check=False).stdout.decode().split()
-        # older Python can't handle '2021-11-12T16:38:42.978865393Z'
-        created = created[:len(datetime.now().isoformat())]
-        created = datetime.fromisoformat(created).timestamp()
-        inode = int(dockerid, 16)
-        size = int(strsize)
-        logging.debug('attributes: %s', (inode, repo, created, size))
-        attributes = {'ctime': created, 'size': size, 'inode': inode}
-        if dockerpath.sep in repo:
-            subdir, repo = repo.split(dockerpath.sep)
-            SUBDIRS[subdir][repo] = attributes
-        else:
-            IMAGES[repo] = attributes
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
