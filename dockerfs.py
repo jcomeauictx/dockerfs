@@ -36,8 +36,8 @@ class DockerImagesFS(Operations):
     '''
     define the docker filesystem operations
     '''
-    def getattr(self, path, fh=None):
-        logging.debug('getattr(path=%s)', path)
+    def getattr(self, path=None, fh=None):
+        logging.debug('getattr(path=%s, fh=%s)', path, fh)
         self.update()
         entry = None
         repo = path.lstrip(os.path.sep)
@@ -153,8 +153,8 @@ class DockerContainersFS(Operations):
     '''
     define the docker filesystem operations
     '''
-    def getattr(self, path, fh=None):
-        logging.debug('getattr(path=%s)', path)
+    def getattr(self, path=None, fh=None):
+        logging.debug('getattr(path=%s, fh=%s)', path, fh)
         self.update()
         entry = None
         container_spec = path.lstrip(os.path.sep)
@@ -231,7 +231,7 @@ class DockerContainersFS(Operations):
             logging.debug('dockerid: %s, container: %s', dockerid, container)
             created, strsize = subprocess.run([
                 'docker', 'inspect',
-                '--format', '{{.Created}} {{.Size}}',
+                '--format', '{{.Created}} {{.HostConfig.ShmSize}}',
                 dockerid
             ], capture_output=True, check=False).stdout.decode().split()
             # older Python can't handle '2021-11-12T16:38:42.978865393Z'
