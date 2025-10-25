@@ -14,7 +14,10 @@ from fusepy import FUSE, FuseOSError, Operations
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
 NOW = time.time()
-CACHED = []  # raw output of `docker images`
+CACHED = {  # raw output of `docker images` and `docker ps`
+    'IMAGES': [],
+    'CONTAINERS': []
+}
 MARKER = b'Presence of this virtual file means the DockerFS is mounted.\n'
 README = {'inode': 1, 'size': len(MARKER), 'ctime': NOW, 'contents': MARKER}
 IMAGES = {'README': README}
@@ -112,11 +115,11 @@ class DockerImagesFS(Operations):
         logging.debug(raw)
         lines = raw.split('\n')
         logging.debug('lines: %s', lines)
-        if lines == CACHED:
+        if lines == CACHED['IMAGES']:
             logging.debug('`docker images` unchanged, not updating')
             return
         logging.debug('`docker images` has changed, updating')
-        CACHED[:] = lines
+        CACHED['IMAGES'][:] = lines
         IMAGES.clear()
         IMAGES['README'] = README
         for line in filter(None, lines):
@@ -139,6 +142,94 @@ class DockerImagesFS(Operations):
                 SUBDIRS[subdir][repo] = attributes
             else:
                 IMAGES[repo] = attributes
+
+class DockerContainersFS(Operations):
+    '''
+    define the docker filesystem operations
+    '''
+    def getattr(self, path, fh=None):
+        logging.debug('getattr(path=%s)', path)
+        self.update()
+        entry = None
+        container_spec = path.lstrip(os.path.sep)
+        if container_spec == '':
+            entry = deepcopy(DIRECTORY)
+            entry['st_nlink'] += len(SUBDIRS)
+        elif container_spec in CONTAINERS:
+            container = CONTAINERS[container_spec]
+            ctime = container['ctime']
+            entry = {
+                'st_mode': (stat.S_IFREG | 0o444),
+                'st_nlink': 1,
+                'st_size': container['size'],
+                'st_ctime': ctime, 'st_mtime': ctime, 'st_atime': ctime,
+                'st_uid': os.getuid(), 'st_gid': os.getgid()
+            }
+        else:
+            logging.error('%s not in %s', container_spec, list(CONTAINERS))
+            raise FuseOSError(errno.ENOENT)
+        return entry
+
+    def readdir(self, path, fh):
+        logging.debug('readdir (path=%s, fh=%s)', path, fh)
+        self.update()
+        cleanpath = path.lstrip(os.path.sep)
+        if cleanpath == '':
+            for child in ['.', '..', *CONTAINERS]:
+                logging.debug('yielding %s', child)
+                yield child
+        else:
+            raise FuseOSError(errno.ENOENT)
+
+    def read(self, path, size, offset, fh):
+        logging.debug('read (path=%s, size=%d, offset=%d, fh=%d',
+                      path, size, offset, fh)
+        self.update()
+        response = None
+        container_spec = path.lstrip(os.path.sep)
+        if container_spec in CONTAINERS:
+            contents = CONTAINERS[container_spec].get('contents')
+            if contents is not None:
+                response = contents[offset:offset + size]
+            else:
+                raise FuseOSError(errno.EAFNOSUPPORT)
+        else:
+            raise FuseOSError(errno.ENOENT)
+        return response
+
+    def update(self):  # pylint: disable=no-self-use
+        '''
+        update global IMAGES with current list
+        '''
+        raw = subprocess.run([
+            'docker', 'ps', '--format',
+            '{{.ID}}:{{.Names}}'
+        ], capture_output=True, check=False).stdout.decode()
+        logging.debug(raw)
+        lines = raw.split('\n')
+        logging.debug('lines: %s', lines)
+        if lines == CACHED['CONTAINERS']:
+            logging.debug('`docker ps` unchanged, not updating')
+            return
+        logging.debug('`docker ps` has changed, updating')
+        CACHED['CONTAINERS'][:] = lines
+        CONTAINERS.clear()
+        CONTAINERS['README'] = README
+        for line in filter(None, lines):
+            dockerid, container = line.split(':', 1)
+            created, strsize = subprocess.run([
+                'docker', 'inspect',
+                '--format', '{{.Created}} {{.Size}}',
+                dockerid
+            ], capture_output=True, check=False).stdout.decode().split()
+            # older Python can't handle '2021-11-12T16:38:42.978865393Z'
+            created = created[:len(datetime.now().isoformat())]
+            created = datetime.fromisoformat(created).timestamp()
+            inode = int(dockerid, 16)
+            size = int(strsize)
+            logging.debug('attributes: %s', (inode, container, created, size))
+            attributes = {'ctime': created, 'size': size, 'inode': inode}
+            CONTAINERS[container] = attributes
 
 def main(mountpoint=None):
     '''
