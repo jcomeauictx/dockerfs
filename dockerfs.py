@@ -9,7 +9,6 @@ from datetime import datetime
 import posixpath as dockerpath
 from collections import defaultdict
 from copy import deepcopy
-from threading import Thread
 from fusepy import FUSE, FuseOSError, Operations
 
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
@@ -36,8 +35,8 @@ class DockerImagesFS(Operations):
     '''
     define the docker filesystem operations
     '''
-    def getattr(self, path=None, fh=None):
-        logging.debug('getattr(path=%s, fh=%s)', path, fh)
+    def getattr(self, path, fh=None):
+        logging.debug('getattr(path=%s)', path)
         self.update()
         entry = None
         repo = path.lstrip(os.path.sep)
@@ -77,7 +76,7 @@ class DockerImagesFS(Operations):
     def getxattr(self, path, name, position=0):
         logging.debug('getxattr (path=%s, name=%s, position: %s)',
                       path, name, position)
-        return b''
+        raise FuseOSError(errno.ENOSYS)
 
     def readdir(self, path, fh):
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
@@ -153,8 +152,8 @@ class DockerContainersFS(Operations):
     '''
     define the docker filesystem operations
     '''
-    def getattr(self, path=None, fh=None):
-        logging.debug('getattr(path=%s, fh=%s)', path, fh)
+    def getattr(self, path, fh=None):
+        logging.debug('getattr(path=%s)', path)
         self.update()
         entry = None
         container_spec = path.lstrip(os.path.sep)
@@ -179,7 +178,7 @@ class DockerContainersFS(Operations):
     def getxattr(self, path, name, position=0):
         logging.debug('getxattr (path=%s, name=%s, position: %s)',
                       path, name, position)
-        return b''
+        raise FuseOSError(errno.ENOSYS)
 
     def readdir(self, path, fh):
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
@@ -210,7 +209,7 @@ class DockerContainersFS(Operations):
 
     def update(self):  # pylint: disable=no-self-use
         '''
-        update global CONTAINERS with current list
+        update global IMAGES with current list
         '''
         raw = subprocess.run([
             'docker', 'ps', '--format',
@@ -228,10 +227,9 @@ class DockerContainersFS(Operations):
         CONTAINERS['README'] = README
         for line in filter(None, lines):
             dockerid, container = line.split(':', 1)
-            logging.debug('dockerid: %s, container: %s', dockerid, container)
             created, strsize = subprocess.run([
                 'docker', 'inspect',
-                '--format', '{{.Created}} {{.HostConfig.ShmSize}}',
+                '--format', '{{.Created}} {{.Size}}',
                 dockerid
             ], capture_output=True, check=False).stdout.decode().split()
             # older Python can't handle '2021-11-12T16:38:42.978865393Z'
@@ -245,22 +243,25 @@ class DockerContainersFS(Operations):
 
 def main(mountpoint=None):
     '''
-    initialize and launch the filesystems
+    initialize and launch the filesystem
     '''
-    mountpoint = mountpoint or os.path.expanduser('~/mnt/docker')
-    filesystems = {'images': DockerImagesFS, 'containers': DockerContainersFS}
-    for subdir in filesystems:
-        submount = mountpoint + '-' + subdir
-        os.makedirs(submount, exist_ok=True)
-        filesystem = filesystems[subdir]()
-        # start the FUSE filesystem
-        # foreground=True runs in the foreground for easier debugging.
-        # auto_unmount=True allows automatic unmounting on exit.
-        Thread(target=FUSE, args=(filesystem, submount),
-               kwargs={'nothreads': True,
-                       'foreground': __debug__,
-                       'auto_unmount': __debug__
-                      }, name=subdir).start()
+    # Create a mount point
+    mountpoint = mountpoint or os.path.expanduser('~/mnt/docker-images')
+    os.makedirs(mountpoint, exist_ok=True)
+
+    # Create an instance of our filesystem
+    filesystem = DockerImagesFS()
+
+    # Start the FUSE filesystem
+    # foreground=True runs in the foreground for easier debugging.
+    # auto_unmount=True allows automatic unmounting on exit.
+    FUSE(
+        filesystem,
+        mountpoint,
+        nothreads=True,
+        foreground=__debug__,
+        auto_unmount=__debug__
+    )
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
