@@ -258,12 +258,12 @@ def main(mountpoint=None):
         # auto_unmount=True allows automatic unmounting on exit.
         Thread(target=FUSE, args=(filesystem, submount),
                kwargs={'nothreads': True,
-                       'foreground': __debug__,
-                       'auto_unmount': __debug__
+                       'foreground': True,
+                       'auto_unmount': True
                       }, name=subdir, daemon=True).start()
-        if not __debug__:  # threads backgrounded, will exit if main exits
-            while True:
-                time.sleep(60)
+    while True:
+        logging.debug('keeping main thread alive...')
+        time.sleep(300)
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
