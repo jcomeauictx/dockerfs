@@ -250,7 +250,7 @@ def main(mountpoint=None):
     for subdir in filesystems:
         submount = mountpoint + '-' + subdir
         os.makedirs(submount, exist_ok=True)
-        filesystem = filesystems[subdir]
+        filesystem = filesystems[subdir]()
         # start the FUSE filesystem
         # foreground=True runs in the foreground for easier debugging.
         # auto_unmount=True allows automatic unmounting on exit.
