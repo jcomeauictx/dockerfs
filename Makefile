@@ -30,7 +30,10 @@ test:
 install: dockerfs.py dockerfs.service
 	cp --archive --interactive $< $(BINDIR)/
 	cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/
+	systemctl --user daemon-reload
+start stop enable disable:
+	systemctl --user $@ dockerfs
 diff: dockerfs.py dockerfs.service
 	-diff $< $(BINDIR)/
 	-diff $(word 2, $+) $(SERVICEDIR)/
-.PHONY: install test umount env %.pylint
+.PHONY: install test umount env %.pylint start stop enable disable
