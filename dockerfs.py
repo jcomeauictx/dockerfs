@@ -9,6 +9,7 @@ from datetime import datetime
 import posixpath as dockerpath
 from collections import defaultdict
 from copy import deepcopy
+from threading import Thread
 from fusepy import FUSE, FuseOSError, Operations
 
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
@@ -254,13 +255,13 @@ def main(mountpoint=None):
         # start the FUSE filesystem
         # foreground=True runs in the foreground for easier debugging.
         # auto_unmount=True allows automatic unmounting on exit.
-        FUSE(
-            filesystem,
-            submount,
-            nothreads=True,
-            foreground=__debug__,
-            auto_unmount=__debug__
-        )
+        Thread(target=FUSE, args=(
+               filesystem,
+               submount,
+               nothreads=True,
+               foreground=__debug__,
+               auto_unmount=__debug__
+              ), name=subdir).start()
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
