@@ -29,8 +29,8 @@ test:
 	$(MAKE) OPT= MOUNTPOINT=~/tmp/mnt/docker-images
 install: dockerfs.py dockerfs.service
 	cp --archive --interactive $< $(BINDIR)/
-	cp --archive --interactive $(word 1, $+) $(SERVICEDIR)/
+	cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/
 diff: dockerfs.py dockerfs.service
-	diff $< $(BINDIR)/
-	diff $(word 1, $+) $(SERVICEDIR)/
+	-diff $< $(BINDIR)/
+	-diff $(word 2, $+) $(SERVICEDIR)/
 .PHONY: install test umount env %.pylint
