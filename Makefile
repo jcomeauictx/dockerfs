@@ -27,6 +27,21 @@ umount:
 	-fusermount -u $(MOUNTPOINT)-containers
 test:
 	$(MAKE) OPT= MOUNTPOINT=$(HOME)/tmp/mnt/docker
-install: dockerfs.py
-	cp --archive --interactive $< $(HOME)/.local/bin/
-.PHONY: install test umount env %.pylint
+install: dockerfs.py dockerfs.service
+	if ! diff -q $< $(BINDIR); then \
+	 cp --archive --interactive $< $(BINDIR)/; \
+	fi
+	if ! diff -q $(word 2, $+) $(SERVICEDIR)/; then \
+	 cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/; \
+	 systemctl --user daemon-reload; \
+	fi
+start stop enable disable status:
+	systemctl --user $@ dockerfs
+log:
+	journalctl --user -u dockerfs -f
+debug info warning:
+	sed -i 's/logging\.\(debug\|info\|warning\)/logging.$@/' dockerfs.py
+diff: dockerfs.py dockerfs.service
+	-diff $< $(BINDIR)/
+	-diff $(word 2, $+) $(SERVICEDIR)/
+.PHONY: install test umount env %.pylint start stop enable disable
