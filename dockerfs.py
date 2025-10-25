@@ -36,7 +36,7 @@ class DockerImagesFS(Operations):
     define the docker filesystem operations
     '''
     def getattr(self, path, fh=None):
-        logging.info('getattr(path=%s)', path)
+        logging.debug('getattr(path=%s)', path)
         self.update()
         entry = None
         repo = path.lstrip(os.path.sep)
@@ -74,27 +74,27 @@ class DockerImagesFS(Operations):
         return entry
 
     def getxattr(self, path, name, position=0):
-        logging.info('getxattr (path=%s, name=%s, position: %s)',
+        logging.debug('getxattr (path=%s, name=%s, position: %s)',
                       path, name, position)
         raise FuseOSError(errno.ENOSYS)
 
     def readdir(self, path, fh):
-        logging.info('readdir (path=%s, fh=%s)', path, fh)
+        logging.debug('readdir (path=%s, fh=%s)', path, fh)
         self.update()
         cleanpath = path.lstrip(os.path.sep)
         if cleanpath == '':
             for child in ['.', '..', *SUBDIRS, *IMAGES]:
-                logging.info('yielding %s', child)
+                logging.debug('yielding %s', child)
                 yield child
         elif cleanpath in SUBDIRS:
             for child in ['.', '..', *SUBDIRS[cleanpath]]:
-                logging.info('yielding %s from %s', child, cleanpath)
+                logging.debug('yielding %s from %s', child, cleanpath)
                 yield child
         else:
             raise FuseOSError(errno.ENOENT)
 
     def read(self, path, size, offset, fh):
-        logging.info('read (path=%s, size=%d, offset=%d, fh=%d',
+        logging.debug('read (path=%s, size=%d, offset=%d, fh=%d',
                       path, size, offset, fh)
         self.update()
         response = None
@@ -117,13 +117,13 @@ class DockerImagesFS(Operations):
             'docker', 'images', '--format',
             '{{.ID}}:{{.Repository}}:{{.Tag}}'
         ], capture_output=True, check=False).stdout.decode()
-        logging.info(raw)
+        logging.debug(raw)
         lines = raw.split('\n')
-        logging.info('lines: %s', lines)
+        logging.debug('lines: %s', lines)
         if lines == CACHED['IMAGES']:
-            logging.info('`docker images` unchanged, not updating')
+            logging.debug('`docker images` unchanged, not updating')
             return
-        logging.info('`docker images` has changed, updating')
+        logging.debug('`docker images` has changed, updating')
         CACHED['IMAGES'][:] = lines
         IMAGES.clear()
         IMAGES['README'] = README
@@ -140,7 +140,7 @@ class DockerImagesFS(Operations):
             created = datetime.fromisoformat(created).timestamp()
             inode = int(dockerid, 16)
             size = int(strsize)
-            logging.info('attributes: %s', (inode, repo, created, size))
+            logging.debug('attributes: %s', (inode, repo, created, size))
             attributes = {'ctime': created, 'size': size, 'inode': inode}
             if dockerpath.sep in repo:
                 subdir, repo = repo.split(dockerpath.sep)
@@ -153,7 +153,7 @@ class DockerContainersFS(Operations):
     define the docker filesystem operations
     '''
     def getattr(self, path, fh=None):
-        logging.info('getattr(path=%s)', path)
+        logging.debug('getattr(path=%s)', path)
         self.update()
         entry = None
         container_spec = path.lstrip(os.path.sep)
@@ -176,23 +176,23 @@ class DockerContainersFS(Operations):
         return entry
 
     def getxattr(self, path, name, position=0):
-        logging.info('getxattr (path=%s, name=%s, position: %s)',
+        logging.debug('getxattr (path=%s, name=%s, position: %s)',
                       path, name, position)
         raise FuseOSError(errno.ENOSYS)
 
     def readdir(self, path, fh):
-        logging.info('readdir (path=%s, fh=%s)', path, fh)
+        logging.debug('readdir (path=%s, fh=%s)', path, fh)
         self.update()
         cleanpath = path.lstrip(os.path.sep)
         if cleanpath == '':
             for child in ['.', '..', *CONTAINERS]:
-                logging.info('yielding %s', child)
+                logging.debug('yielding %s', child)
                 yield child
         else:
             raise FuseOSError(errno.ENOENT)
 
     def read(self, path, size, offset, fh):
-        logging.info('read (path=%s, size=%d, offset=%d, fh=%d',
+        logging.debug('read (path=%s, size=%d, offset=%d, fh=%d',
                       path, size, offset, fh)
         self.update()
         response = None
@@ -215,13 +215,13 @@ class DockerContainersFS(Operations):
             'docker', 'ps', '--format',
             '{{.ID}}:{{.Names}}'
         ], capture_output=True, check=False).stdout.decode()
-        logging.info(raw)
+        logging.debug(raw)
         lines = raw.split('\n')
-        logging.info('lines: %s', lines)
+        logging.debug('lines: %s', lines)
         if lines == CACHED['CONTAINERS']:
-            logging.info('`docker ps` unchanged, not updating')
+            logging.debug('`docker ps` unchanged, not updating')
             return
-        logging.info('`docker ps` has changed, updating')
+        logging.debug('`docker ps` has changed, updating')
         CACHED['CONTAINERS'][:] = lines
         CONTAINERS.clear()
         CONTAINERS['README'] = README
@@ -237,7 +237,7 @@ class DockerContainersFS(Operations):
             created = datetime.fromisoformat(created).timestamp()
             inode = int(dockerid, 16)
             size = int(strsize)
-            logging.info('attributes: %s', (inode, container, created, size))
+            logging.debug('attributes: %s', (inode, container, created, size))
             attributes = {'ctime': created, 'size': size, 'inode': inode}
             CONTAINERS[container] = attributes
 
