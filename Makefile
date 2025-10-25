@@ -8,7 +8,8 @@ ifeq ($(SHOWENV),)
 else
 export
 endif
-$(MOUNTPOINT)/README: dockerfs.py $(MOUNTPOINT)
+all: $(MOUNTPOINT)-images/README umount
+$(MOUNTPOINT)-images/README: dockerfs.py $(MOUNTPOINT)
 	$(MAKE) $(<:.py=.pylint)
 	$(PYTHON) $(OPT) $+
 $(MOUNTPOINT): | $(HOME)
@@ -22,7 +23,8 @@ else
 	$@
 endif
 umount:
-	fusermount -u $(MOUNTPOINT)
+	fusermount -u $(MOUNTPOINT)-images
+	fusermount -u $(MOUNTPOINT)-containers
 test:
 	$(MAKE) OPT= MOUNTPOINT=$(HOME)/tmp/mnt/docker
 install: dockerfs.py
