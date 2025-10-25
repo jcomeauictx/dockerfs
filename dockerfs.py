@@ -255,13 +255,11 @@ def main(mountpoint=None):
         # start the FUSE filesystem
         # foreground=True runs in the foreground for easier debugging.
         # auto_unmount=True allows automatic unmounting on exit.
-        Thread(target=FUSE, args=(
-               filesystem,
-               submount,
-               nothreads=True,
-               foreground=__debug__,
-               auto_unmount=__debug__
-              ), name=subdir).start()
+        Thread(target=FUSE, args=(filesystem, submount),
+               kwargs={'nothreads': True,
+                       'foreground': __debug__,
+                       'auto_unmount': __debug__
+                      }, name=subdir).start()
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
