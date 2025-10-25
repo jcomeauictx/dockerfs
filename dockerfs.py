@@ -77,7 +77,7 @@ class DockerImagesFS(Operations):
     def getxattr(self, path, name, position=0):
         logging.debug('getxattr (path=%s, name=%s, position: %s)',
                       path, name, position)
-        raise FuseOSError(errno.ENOSYS)
+        raise FuseOSError(errno.ENODATA)
 
     def readdir(self, path, fh):
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
@@ -179,7 +179,7 @@ class DockerContainersFS(Operations):
     def getxattr(self, path, name, position=0):
         logging.debug('getxattr (path=%s, name=%s, position: %s)',
                       path, name, position)
-        raise FuseOSError(errno.ENOSYS)
+        raise FuseOSError(errno.ENODATA)
 
     def readdir(self, path, fh):
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
