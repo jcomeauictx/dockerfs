@@ -3,6 +3,8 @@ SHELL := /bin/bash
 MOUNTPOINT := $(HOME)/mnt/docker
 PYTHON ?= $(word 1, $(shell which python3 python false))
 PYLINT ?= $(word 1, $(shell which pylint3 pylint true))
+BINDIR ?= $(HOME)/.local/bin
+SERVICEDIR ?= $(HOME)/.config/systemd/user
 OPT ?= -OO
 ifeq ($(SHOWENV),)
 else
