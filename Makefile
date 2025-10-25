@@ -28,10 +28,14 @@ umount:
 test:
 	$(MAKE) OPT= MOUNTPOINT=~/tmp/mnt/docker-images
 install: dockerfs.py dockerfs.service
-	cp --archive --interactive $< $(BINDIR)/
-	cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/
-	systemctl --user daemon-reload
-start stop enable disable:
+	if ! diff -q $< $(BINDIR); then \
+	 cp --archive --interactive $< $(BINDIR)/; \
+	fi
+	if ! diff -q $(word 2, $+) $(SERVICEDIR)/; then \
+	 cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/; \
+	 systemctl --user daemon-reload; \
+	fi
+start stop enable disable status:
 	systemctl --user $@ dockerfs
 diff: dockerfs.py dockerfs.service
 	-diff $< $(BINDIR)/
