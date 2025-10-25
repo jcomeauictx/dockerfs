@@ -261,6 +261,9 @@ def main(mountpoint=None):
                        'foreground': __debug__,
                        'auto_unmount': __debug__
                       }, name=subdir, daemon=True).start()
+        if not __debug__:  # threads backgrounded, will exit if main exits
+            while True:
+                time.sleep(60)
 
 if __name__ == "__main__":
     main(*sys.argv[1:])

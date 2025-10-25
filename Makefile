@@ -23,8 +23,8 @@ else
 	$@
 endif
 umount:
-	fusermount -u $(MOUNTPOINT)-images
-	fusermount -u $(MOUNTPOINT)-containers
+	-fusermount -u $(MOUNTPOINT)-images
+	-fusermount -u $(MOUNTPOINT)-containers
 test:
 	$(MAKE) OPT= MOUNTPOINT=$(HOME)/tmp/mnt/docker
 install: dockerfs.py
