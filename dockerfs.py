@@ -260,7 +260,7 @@ def main(mountpoint=None):
         mountpoint,
         nothreads=True,
         foreground=__debug__,
-        auto_unmount=__debug__
+        auto_unmount=True
     )
 
 if __name__ == "__main__":
