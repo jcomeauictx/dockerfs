@@ -37,6 +37,8 @@ install: dockerfs.py dockerfs.service
 	fi
 start stop enable disable status:
 	systemctl --user $@ dockerfs
+log:
+	journalctl --user -u dockerfs -f
 diff: dockerfs.py dockerfs.service
 	-diff $< $(BINDIR)/
 	-diff $(word 2, $+) $(SERVICEDIR)/
