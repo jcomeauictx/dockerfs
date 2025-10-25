@@ -3,6 +3,8 @@ SHELL := /bin/bash
 MOUNTPOINT := $(HOME)/mnt/docker-images
 PYTHON ?= $(word 1, $(shell which python3 python false))
 PYLINT ?= $(word 1, $(shell which pylint3 pylint true))
+BINDIR ?= $(HOME)/.local/bin
+SERVICEDIR ?= $(HOME)/.config/systemd/user
 OPT ?= -OO
 ifeq ($(SHOWENV),)
 else
@@ -25,6 +27,10 @@ umount:
 	fusermount -u $(MOUNTPOINT)
 test:
 	$(MAKE) OPT= MOUNTPOINT=~/tmp/mnt/docker-images
-install: dockerfs.py
-	cp --archive --interactive $< $(HOME)/.local/bin/
+install: dockerfs.py dockerfs.service
+	cp --archive --interactive $< $(BINDIR)/
+	cp --archive --interactive $(word 1, $+) $(SERVICEDIR)/
+diff: dockerfs.py dockerfs.service
+	diff $< $(BINDIR)/
+	diff $(word 1, $+) $(SERVICEDIR)/
 .PHONY: install test umount env %.pylint
