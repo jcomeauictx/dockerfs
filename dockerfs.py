@@ -210,7 +210,7 @@ class DockerContainersFS(Operations):
 
     def update(self):  # pylint: disable=no-self-use
         '''
-        update global IMAGES with current list
+        update global CONTAINERS with current list
         '''
         raw = subprocess.run([
             'docker', 'ps', '--format',
@@ -228,6 +228,7 @@ class DockerContainersFS(Operations):
         CONTAINERS['README'] = README
         for line in filter(None, lines):
             dockerid, container = line.split(':', 1)
+            logging.debug('dockerid: %s, container: %s', dockerid, container)
             created, strsize = subprocess.run([
                 'docker', 'inspect',
                 '--format', '{{.Created}} {{.Size}}',
