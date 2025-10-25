@@ -73,6 +73,11 @@ class DockerImagesFS(Operations):
             raise FuseOSError(errno.ENOENT)
         return entry
 
+    def getxattr(self, path, name, position=0):
+        logging.debug('getxattr (path=%s, name=%s, position: %s)',
+                      path, name, position)
+        raise FuseOSError(errno.ENOSYS)
+
     def readdir(self, path, fh):
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
         self.update()
@@ -169,6 +174,11 @@ class DockerContainersFS(Operations):
             logging.error('%s not in %s', container_spec, list(CONTAINERS))
             raise FuseOSError(errno.ENOENT)
         return entry
+
+    def getxattr(self, path, name, position=0):
+        logging.debug('getxattr (path=%s, name=%s, position: %s)',
+                      path, name, position)
+        raise FuseOSError(errno.ENOSYS)
 
     def readdir(self, path, fh):
         logging.debug('readdir (path=%s, fh=%s)', path, fh)

@@ -24,7 +24,7 @@ endif
 umount:
 	fusermount -u $(MOUNTPOINT)
 test:
-	$(MAKE) OPT=
+	$(MAKE) OPT= MOUNTPOINT=~/tmp/mnt/docker-images
 install: dockerfs.py
 	cp --archive --interactive $< $(HOME)/.local/bin/
 .PHONY: install test umount env %.pylint
