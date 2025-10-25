@@ -1,6 +1,6 @@
 # allow Bashisms
 SHELL := /bin/bash
-MOUNTPOINT := $(HOME)/mnt/docker-images
+MOUNTPOINT := $(HOME)/mnt/docker
 PYTHON ?= $(word 1, $(shell which python3 python false))
 PYLINT ?= $(word 1, $(shell which pylint3 pylint true))
 OPT ?= -OO
@@ -24,7 +24,7 @@ endif
 umount:
 	fusermount -u $(MOUNTPOINT)
 test:
-	$(MAKE) OPT= MOUNTPOINT=$(HOME)/tmp/mnt/docker-images
+	$(MAKE) OPT= MOUNTPOINT=$(HOME)/tmp/mnt/docker
 install: dockerfs.py
 	cp --archive --interactive $< $(HOME)/.local/bin/
 .PHONY: install test umount env %.pylint
