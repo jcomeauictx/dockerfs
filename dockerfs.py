@@ -260,7 +260,7 @@ def main(mountpoint=None):
                kwargs={'nothreads': True,
                        'foreground': __debug__,
                        'auto_unmount': __debug__
-                      }, name=subdir).start()
+                      }, name=subdir, daemon=True).start()
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
