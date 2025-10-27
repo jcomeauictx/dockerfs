@@ -33,3 +33,7 @@ if you copy-and-paste the Makefile, be sure to change the 4-space indents to
 actual tabs.
 
 next step for me is to do the same for docker-containers.
+
+## bugs
+
+* broken under SELinux
