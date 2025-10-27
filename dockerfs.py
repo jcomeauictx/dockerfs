@@ -242,14 +242,14 @@ class DockerContainersFS(Operations):
             attributes = {'ctime': created, 'size': size, 'inode': inode}
             CONTAINERS[container] = attributes
 
-def main(mountpoint=None):
+def main(mountprefix=None):
     '''
     initialize and launch the filesystem
     '''
-    mountpoint = mountpoint or os.path.expanduser('~/mnt/docker')
+    mountprefix = mountprefix or os.path.expanduser('~/mnt/docker')
     filesystems = {'images': DockerImagesFS, 'containers': DockerContainersFS}
     for subdir in filesystems:
-        submount = mountpoint + '-' + subdir
+        submount = mountprefix + '-' + subdir
         os.makedirs(submount, exist_ok=True)
         filesystem = filesystems[subdir]()
         # start the FUSE filesystem
