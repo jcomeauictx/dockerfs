@@ -46,4 +46,6 @@ debug info warning:
 diff: dockerfs.py dockerfs.service
 	-diff $< $(BINDIR)/
 	-diff $(word 2, $+) $(SERVICEDIR)/
+push:
+	$(foreach remote, $(shell git remote), git push $(remote);)
 .PHONY: install test umount env %.pylint start stop enable disable
