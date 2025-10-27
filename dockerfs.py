@@ -260,7 +260,7 @@ def main(mountprefix=None):
                kwargs={'nothreads': True,
                        'foreground': True,
                        'auto_unmount': True
-                      }, name=subdir, daemon=False).start()
+                      }, name=subdir, daemon=True).start()
     while True:
         logging.debug('keeping main thread alive...')
         time.sleep(20)
