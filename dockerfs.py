@@ -109,7 +109,7 @@ class DockerImagesFS(Operations):
             raise FuseOSError(errno.ENOENT)
         return response
 
-    def update(self):  # pylint: disable=no-self-use
+    def update(self):  # pylint: disable=useless-option-value, no-self-use
         '''
         update global IMAGES with current list
         '''
@@ -207,7 +207,7 @@ class DockerContainersFS(Operations):
             raise FuseOSError(errno.ENOENT)
         return response
 
-    def update(self):  # pylint: disable=no-self-use
+    def update(self):  # pylint: disable=useless-option-value, no-self-use
         '''
         update global IMAGES with current list
         '''
