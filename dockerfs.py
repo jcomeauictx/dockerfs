@@ -12,7 +12,8 @@ from copy import deepcopy
 from threading import Thread
 from fusepy import FUSE, FuseOSError, Operations
 
-logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
+# can change final level after `else` to logging.INFO or logging.WARN
+logging.basicConfig(level=logging.DEBUG if __debug__ else logging.DEBUG)
 
 NOW = time.time()
 CACHED = {  # raw output of `docker images` and `docker ps`
