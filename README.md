@@ -38,3 +38,5 @@ edit as needed).
 ## bugs
 
 * broken under SELinux
+* doesn't umount on `make stop`; need to `make umount` after complete, and it
+takes over a minute.
