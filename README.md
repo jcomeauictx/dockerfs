@@ -34,3 +34,7 @@ $(MOUNTPOINT): | $(HOME)
 if you copy-and-paste the Makefile snippet, be sure to change the 4-space
 indents to actual tabs. (don't do this; use the repo's Makefile instead and
 edit as needed).
+
+## bugs
+
+* broken under SELinux

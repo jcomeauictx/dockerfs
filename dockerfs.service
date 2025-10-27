@@ -1,11 +1,9 @@
 [Unit]
 Description=dockerfs: show docker images as files
 [Service]
-Type=forking
+Type=simple
 ExecStart=%h/.local/bin/dockerfs.py
 Restart=always
 RestartSec=60
-StandardOutput=inherit
-StandardError=journal+console
 [Install]
 WantedBy=default.target

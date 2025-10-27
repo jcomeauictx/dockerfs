@@ -1,6 +1,6 @@
 # allow Bashisms
 SHELL := /bin/bash
-MOUNTPOINT := $(HOME)/mnt/docker-images
+MOUNTPREFIX := $(HOME)/mnt/docker
 PYTHON ?= $(word 1, $(shell which python3 python false))
 PYLINT ?= $(word 1, $(shell which pylint3 pylint true))
 BINDIR ?= $(HOME)/.local/bin
@@ -10,10 +10,11 @@ ifeq ($(SHOWENV),)
 else
 export
 endif
-$(MOUNTPOINT)/README: dockerfs.py $(MOUNTPOINT)
+all: $(MOUNTPREFIX)-images/README umount
+%/README: dockerfs.py %
 	$(MAKE) $(<:.py=.pylint)
 	$(PYTHON) $(OPT) $+
-$(MOUNTPOINT): | $(HOME)
+$(MOUNTPREFIX)-%:
 	mkdir -p $@
 %.pylint: %.py
 	$(PYLINT) $<
@@ -24,9 +25,10 @@ else
 	$@
 endif
 umount:
-	fusermount -u $(MOUNTPOINT)
+	-fusermount -u $(MOUNTPREFIX)-images
+	-fusermount -u $(MOUNTPREFIX)-containers
 test:
-	$(MAKE) OPT= MOUNTPOINT=~/tmp/mnt/docker-images
+	$(MAKE) OPT= MOUNTPREFIX=$(HOME)/tmp/mnt/docker
 install: dockerfs.py dockerfs.service
 	if ! diff -q $< $(BINDIR); then \
 	 cp --archive --interactive $< $(BINDIR)/; \

@@ -246,23 +246,23 @@ def main(mountpoint=None):
     '''
     initialize and launch the filesystem
     '''
-    # Create a mount point
-    mountpoint = mountpoint or os.path.expanduser('~/mnt/docker-images')
-    os.makedirs(mountpoint, exist_ok=True)
-
-    # Create an instance of our filesystem
-    filesystem = DockerImagesFS()
-
-    # Start the FUSE filesystem
-    # foreground=True runs in the foreground for easier debugging.
-    # auto_unmount=True allows automatic unmounting on exit.
-    FUSE(
-        filesystem,
-        mountpoint,
-        nothreads=True,
-        foreground=__debug__,
-        auto_unmount=True
-    )
+    mountpoint = mountpoint or os.path.expanduser('~/mnt/docker')
+    filesystems = {'images': DockerImagesFS, 'containers': DockerContainersFS}
+    for subdir in filesystems:
+        submount = mountpoint + '-' + subdir
+        os.makedirs(submount, exist_ok=True)
+        filesystem = filesystems[subdir]()
+        # start the FUSE filesystem
+        # foreground=True runs in the foreground for easier debugging.
+        # auto_unmount=True allows automatic unmounting on exit.
+        Thread(target=FUSE, args=(filesystem, submount),
+               kwargs={'nothreads': True,
+                       'foreground': True,
+                       'auto_unmount': True
+                      }, name=subdir, daemon=True).start()
+    while True:
+        logging.debug('keeping main thread alive...')
+        time.sleep(300)
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
