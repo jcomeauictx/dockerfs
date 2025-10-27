@@ -37,7 +37,7 @@ install: dockerfs.py dockerfs.service
 	 cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/; \
 	 systemctl --user daemon-reload; \
 	fi
-start stop enable disable status:
+start stop restart enable disable status:
 	systemctl --user $@ dockerfs
 log:
 	journalctl --user -u dockerfs -f
