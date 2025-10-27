@@ -7,6 +7,7 @@ import subprocess  # pylint: disable=multiple-imports
 from datetime import datetime
 # use posixpath to split, e.g., "wyaeld/sarge"
 import posixpath as dockerpath
+from threading import Thread
 from collections import defaultdict
 from copy import deepcopy
 from fusepy import FUSE, FuseOSError, Operations
@@ -259,10 +260,10 @@ def main(mountprefix=None):
                kwargs={'nothreads': True,
                        'foreground': True,
                        'auto_unmount': True
-                      }, name=subdir, daemon=True).start()
+                      }, name=subdir, daemon=False).start()
     while True:
         logging.debug('keeping main thread alive...')
-        time.sleep(300)
+        time.sleep(20)
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
