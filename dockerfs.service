@@ -5,5 +5,6 @@ Type=simple
 ExecStart=%h/.local/bin/dockerfs.py
 Restart=always
 RestartSec=60
+SELinuxContext=unconfined_u:unconfined_r:unconfined_t:s0
 [Install]
 WantedBy=default.target

@@ -37,6 +37,7 @@ edit as needed).
 
 ## bugs
 
-* broken under SELinux
-* doesn't umount on `make stop`; need to `make umount` after complete, and it
-takes over a minute.
+* broken under SELinux. attempted fix, but cannot test at this time.
+* `make stop` works quickly and well now, but by raising KeyboardInterrupt on
+  receipt of a SIGTERM. ugly but effective, and the threads are allowed to
+  `fusermount -u` the filesystems.
