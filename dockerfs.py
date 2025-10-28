@@ -211,7 +211,7 @@ class DockerContainersFS(Operations):
 
     def update(self):  # pylint: disable=useless-option-value, no-self-use
         '''
-        update global IMAGES with current list
+        update global CONTAINERS with current list
         '''
         raw = subprocess.run([
             'docker', 'ps', '--format',
