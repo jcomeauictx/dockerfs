@@ -231,7 +231,7 @@ class DockerContainersFS(Operations):
             dockerid, container = line.split(':', 1)
             created, strsize = subprocess.run([
                 'docker', 'inspect',
-                '--format', '{{.Created}} {{.Size}}',
+                '--format', '{{.Created}} {{.HostConfig.ShmSize}}',
                 dockerid
             ], capture_output=True, check=False).stdout.decode().split()
             # older Python can't handle '2021-11-12T16:38:42.978865393Z'
