@@ -3,7 +3,7 @@
 implement simple docker filesystem
 '''
 import sys, os, stat, errno, logging, time  # pylint: disable=multiple-imports
-import subprocess  # pylint: disable=multiple-imports
+import subprocess, signal  # pylint: disable=multiple-imports
 from datetime import datetime
 # use posixpath to split, e.g., "wyaeld/sarge"
 import posixpath as dockerpath
@@ -243,16 +243,24 @@ class DockerContainersFS(Operations):
             attributes = {'ctime': created, 'size': size, 'inode': inode}
             CONTAINERS[container] = attributes
 
+def cleanup(signal_number, frame):
+    '''
+    handle systemctl's sigterm on `systemctl stop dockerfs`
+    '''
+    logging.warning('signal received: %s, frame=%s', signal_number, frame)
+    raise KeyboardInterrupt
+
 def main(mountprefix=None):
     '''
     initialize and launch the filesystem
     '''
     mountprefix = mountprefix or os.path.expanduser('~/mnt/docker')
     filesystems = {'images': DockerImagesFS, 'containers': DockerContainersFS}
-    for subdir in filesystems:
+    signal.signal(signal.SIGTERM, cleanup)
+    for subdir, filesystem in filesystems.items():
         submount = mountprefix + '-' + subdir
         os.makedirs(submount, exist_ok=True)
-        filesystem = filesystems[subdir]()
+        filesystem = filesystem()  # class object to instance
         # start the FUSE filesystem
         # foreground=True runs in the foreground for easier debugging.
         # auto_unmount=True allows automatic unmounting on exit.
