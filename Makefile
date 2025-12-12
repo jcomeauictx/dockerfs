@@ -36,6 +36,7 @@ install: dockerfs.py dockerfs.service
 	if ! diff -q $(word 2, $+) $(SERVICEDIR)/; then \
 	 cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/; \
 	 systemctl --user daemon-reload; \
+	 systemctl --user restart dockerfs; \
 	fi
 start stop restart enable disable status:
 	systemctl --user $@ dockerfs
