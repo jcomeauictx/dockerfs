@@ -40,3 +40,6 @@ indents to actual tabs.
 * `make stop` works quickly and well now, but by raising KeyboardInterrupt on
   receipt of a SIGTERM. ugly but effective, and the threads are allowed to
   `fusermount -u` the filesystems.
+* gvfsd and related daemons will cause problems with this filesystem and will
+  clog the logs with what looks like a virus attempting to exploit files like
+  autorun.inf.

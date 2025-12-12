@@ -13,7 +13,7 @@ endif
 all: $(MOUNTPREFIX)-images/README umount
 %/README: dockerfs.py %
 	$(MAKE) $(<:.py=.pylint)
-	$(PYTHON) $(OPT) $+
+	$(PYTHON) $(OPT) $< $(MOUNTPREFIX)
 $(MOUNTPREFIX)-images $(MOUNTPREFIX)-containers:
 	mkdir -p $@
 %.pylint: %.py
