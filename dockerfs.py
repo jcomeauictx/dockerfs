@@ -271,6 +271,15 @@ def cleanup(signal_number, frame):
     logging.warning('signal received: %s, frame=%s', signal_number, frame)
     raise KeyboardInterrupt
 
+def errorcatcher(exception_type, value, traceback):
+    '''
+    don't alarm user with tracebacks for expected errors
+    '''
+    if exception_type in (FuseOSError, KeyboardInterrupt):
+        logging.error('%s: %s', exception_type, value)
+    else:
+        sys.__excepthook__(exception_type, value, traceback)
+
 def main(mountprefix=None):
     '''
     initialize and launch the filesystem
@@ -278,6 +287,7 @@ def main(mountprefix=None):
     mountprefix = mountprefix or os.path.expanduser('~/mnt/docker')
     filesystems = {'images': DockerImagesFS, 'containers': DockerContainersFS}
     signal.signal(signal.SIGTERM, cleanup)
+    sys.excepthook = errorcatcher
     for subdir, filesystem in filesystems.items():
         submount = mountprefix + '-' + subdir
         os.makedirs(submount, exist_ok=True)
