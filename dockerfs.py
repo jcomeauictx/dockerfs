@@ -38,6 +38,9 @@ class DockerImagesFS(Operations):
     define the docker filesystem operations
     '''
     def getattr(self, path, fh=None):
+        '''
+        get attributes
+        '''
         logging.debug('getattr(path=%s)', path)
         self.update()
         entry = None
@@ -76,11 +79,17 @@ class DockerImagesFS(Operations):
         return entry
 
     def getxattr(self, path, name, position=0):
+        '''
+        get extended attributes
+        '''
         logging.debug('getxattr (path=%s, name=%s, position: %s)',
                       path, name, position)
         raise FuseOSError(errno.ENOSYS)
 
     def readdir(self, path, fh):
+        '''
+        return directory contents
+        '''
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
         self.update()
         cleanpath = path.lstrip(os.path.sep)
@@ -96,6 +105,9 @@ class DockerImagesFS(Operations):
             raise FuseOSError(errno.ENOENT)
 
     def read(self, path, size, offset, fh):
+        '''
+        read from docker image
+        '''
         logging.debug('read (path=%s, size=%d, offset=%d, fh=%d',
                       path, size, offset, fh)
         self.update()
@@ -183,6 +195,9 @@ class DockerContainersFS(Operations):
         raise FuseOSError(errno.ENOSYS)
 
     def readdir(self, path, fh):
+        '''
+        get directory contents
+        '''
         logging.debug('readdir (path=%s, fh=%s)', path, fh)
         self.update()
         cleanpath = path.lstrip(os.path.sep)
@@ -194,6 +209,9 @@ class DockerContainersFS(Operations):
             raise FuseOSError(errno.ENOENT)
 
     def read(self, path, size, offset, fh):
+        '''
+        read from docker container
+        '''
         logging.debug('read (path=%s, size=%d, offset=%d, fh=%d',
                       path, size, offset, fh)
         self.update()
