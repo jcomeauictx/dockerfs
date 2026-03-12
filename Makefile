@@ -6,11 +6,20 @@ PYLINT ?= $(word 1, $(shell which pylint3 pylint true))
 BINDIR ?= $(HOME)/.local/bin
 SERVICEDIR ?= $(HOME)/.config/systemd/user
 OPT ?= -OO
+INSTALLED := .installed
+WHICH := type -p
 ifeq ($(SHOWENV),)
 else
 export
 endif
 all: $(MOUNTPREFIX)-images/README umount
+$(INSTALLED)/fusermount: $(INSTALLED)
+	if [ ! "$(WHICH) $(@F)" ]; then \
+	 sudo apt install fuse3; \
+	fi
+	touch $@
+$(INSTALLED):
+	mkdir $@
 %/README: dockerfs.py %
 	$(MAKE) $(<:.py=.pylint)
 	$(PYTHON) $(OPT) $< $(MOUNTPREFIX)
@@ -24,7 +33,7 @@ ifeq ($(SHOWENV),)
 else
 	$@
 endif
-umount:
+umount: $(INSTALLED)/fusermount
 	-fusermount -u $(MOUNTPREFIX)-images
 	-fusermount -u $(MOUNTPREFIX)-containers
 test:
