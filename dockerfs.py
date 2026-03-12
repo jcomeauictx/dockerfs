@@ -41,7 +41,7 @@ class DockerImagesFS(Operations):
         '''
         get attributes
         '''
-        logging.debug('getattr(path=%s)', path)
+        logging.debug('DockerImagesFS.getattr(path=%s)', path)
         self.update()
         entry = None
         repo = path.lstrip(os.path.sep)
@@ -73,6 +73,9 @@ class DockerImagesFS(Operations):
             }
         elif subdir is None and repo in SUBDIRS:  # just the directory name
             entry = deepcopy(DIRECTORY)
+        elif path == '/autorun.inf':
+            logging.error('no such file %s: is gvfsd running?', path)
+            raise FuseOSError(errno.ENOENT)
         else:
             logging.error('%s not in %s', repo, list(IMAGES))
             raise FuseOSError(errno.ENOENT)
@@ -167,7 +170,7 @@ class DockerContainersFS(Operations):
     define the docker filesystem operations
     '''
     def getattr(self, path, fh=None):
-        logging.debug('getattr(path=%s)', path)
+        logging.debug('DockerContainersFS.getattr(path=%s)', path)
         self.update()
         entry = None
         container_spec = path.lstrip(os.path.sep)
