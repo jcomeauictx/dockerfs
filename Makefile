@@ -39,13 +39,18 @@ umount: $(INSTALLED)/fusermount
 test:
 	$(MAKE) OPT= MOUNTPREFIX=$(HOME)/tmp/mnt/docker
 install: dockerfs.py dockerfs.service
+	changed=false; \
 	if ! diff -q $< $(BINDIR); then \
-	 cp --archive --interactive $< $(BINDIR)/; \
-	fi
+	 cp --archive --interactive $< $(BINDIR)/ && changed=true; \
+	fi; \
 	if ! diff -q $(word 2, $+) $(SERVICEDIR)/; then \
-	 cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/; \
-	 systemctl --user daemon-reload; \
-	 systemctl --user restart dockerfs; \
+	 cp --archive --interactive $(word 2, $+) $(SERVICEDIR)/ && \
+	 changed=true && systemctl --user daemon-reload; \
+	fi; \
+	if [ "$$changed" = "true" ]; then \
+	  systemctl --user restart dockerfs; \
+	else \
+	  echo "neither the script nor the service file were changed" >&2; \
 	fi
 start stop restart enable disable status:
 	systemctl --user $@ dockerfs
