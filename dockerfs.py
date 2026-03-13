@@ -33,6 +33,21 @@ DIRECTORY = {
     'st_uid': os.getuid(), 'st_gid': os.getgid()
 }
 
+def parse_docker_timestamp(timestamp):
+    '''
+    parse Docker .Created timestamp to epoch seconds
+
+    handles both old-style UTC (trailing Z) and new-style local time
+    (trailing +HH:MM). truncates nanoseconds to microseconds for
+    fromisoformat compatibility.
+    '''
+    import re
+    # trim nanosecond precision to microseconds, preserve tz suffix
+    timestamp = re.sub(r'(\.\d{6})\d+', r'\1', timestamp)
+    # Z not supported by fromisoformat before Python 3.11
+    timestamp = timestamp.replace('Z', '+00:00')
+    return datetime.fromisoformat(timestamp).timestamp()
+
 class DockerImagesFS(Operations):
     '''
     define the docker filesystem operations
@@ -152,9 +167,7 @@ class DockerImagesFS(Operations):
                 '--format', '{{.Created}} {{.Size}}',
                 dockerid
             ], capture_output=True, check=False).stdout.decode().split()
-            # older Python can't handle '2021-11-12T16:38:42.978865393Z'
-            created = created[:len(datetime.now().isoformat())]
-            created = datetime.fromisoformat(created).timestamp()
+            created = parse_docker_timestamp(created)
             inode = int(dockerid, 16)
             size = int(strsize)
             logging.debug('attributes: %s', (inode, repo, created, size))
@@ -255,9 +268,7 @@ class DockerContainersFS(Operations):
                 '--format', '{{.Created}} {{.HostConfig.ShmSize}}',
                 dockerid
             ], capture_output=True, check=False).stdout.decode().split()
-            # older Python can't handle '2021-11-12T16:38:42.978865393Z'
-            created = created[:len(datetime.now().isoformat())]
-            created = datetime.fromisoformat(created).timestamp()
+            created = parse_docker_timestamp(created)
             inode = int(dockerid, 16)
             size = int(strsize)
             logging.debug('attributes: %s', (inode, container, created, size))
